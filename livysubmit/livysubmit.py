@@ -72,6 +72,7 @@ class Password(argparse.Action):
 
 def make_parser():
     parser = argparse.ArgumentParser(description='Submit python script to the spark cluster')
+    parser.prog = 'livy_submit'
 
 
     parser.add_argument( "--livy-url", action=EnvDefault, envvar='LIVY_SUBMIT_URL', 
