@@ -12,12 +12,12 @@ setup(
     # Needed for dependencies
     install_requires=[],
     # *strongly* suggested for sharing
-    version='1.0',
+    version='1.0.1',
     # The license can be anything you like
     license='MIT',
     description='Livy-Submit enables you to send your python files to a spark cluster using Livy running on edge node',
     long_description=open('README.md').read(),
-    long_description_content_type='text/markdown',  
+    long_description_content_type='text/markdown',
     entry_points={'console_scripts' : [
             'livy_submit = livysubmit.__main__:main'
         ]},
