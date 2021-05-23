@@ -45,6 +45,12 @@ def print_progress(percentage, finished=False, prefix='', suffix='', decimals=1,
         sys.stdout.write('\n')
     sys.stdout.flush()
 
+class AssignKeyValue(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, dict())
+        for value in values:
+            key, value = value.split('=')
+            getattr(namespace, self.dest)[key] = value
 
 
 class EnvDefault(argparse.Action):
@@ -115,7 +121,14 @@ def make_parser():
 
 
     group1 = parser.add_argument_group('Submit settings', 'Settings that deal with the different items regarding the submission of a python script')
-    group1.add_argument('-n', '--nowait', action='store_true' , dest='nowait' , 
+
+    group1.add_argument('--files', dest='files', metavar='files', nargs='+', default=[],
+                        help='Files to be placed in executor working directory')
+
+    group1.add_argument('--py-files', dest='py_files', metavar='python_files', nargs='+', default=[],
+                    help='Files to be placed on the PYTHONPATH')
+
+    group1.add_argument('-n', '--nowait', action='store_true' , dest='nowait' ,
                     help='Do not wait for the execution of the program to finish on the spark cluster')
 
     group1.add_argument('-k', '--keep-session-alive', action='store_true' ,dest='keep_session_alive' , 
@@ -146,6 +159,9 @@ def make_parser():
 
     group3 = parser.add_argument_group('Executor settings', 'All options related to executor settings')
 
+    group3.add_argument('--exe-env', dest='spark_executor_var', metavar='EXECUTOR_VAR',
+                        help='key-value pair for spark executor environment',
+                        nargs='*', action=AssignKeyValue, default=None)
     group3.add_argument('--num-executors' , dest='num_executors', type=int, metavar='NUM_EXECUTORS', default=10,
                     help='Specify the number of executors you want to use in non dynamic setting (Default: 10)')
     group3.add_argument('--executor-cores' ,  dest='executor_cores', type=int, metavar='EXECUTOR_CORES', default=4,
@@ -379,8 +395,15 @@ def submit_script(parsed_arguments):
                 }
         }
 
+        if parsed_arguments['spark_executor_var']:
+            exe_env = {'spark.executorEnv.{}'.format(key): value for key, value in parsed_arguments['spark_executor_var'].items()}
+            data['conf'].update(exe_env)
         if parsed_arguments['spark_yarn_executor_memoryoverhead']:
             data['conf']['spark.yarn.executor.memoryOverhead'] = parsed_arguments['spark_yarn_executor_memoryoverhead']
+        if parsed_arguments['py_files']:
+            data['pyFiles'] = parsed_arguments['py_files']
+        if parsed_arguments['files']:
+            data['files'] = parsed_arguments['files']
 
 
         # Create the session
@@ -526,9 +549,10 @@ def parse_arguments( args ):
 
     args_dict['headers'] = {'Content-Type': 'application/json' , 'X-Requested-By' : args_dict['username'] }
 
-    _password = keyring.get_password( 'livysubmit' , args_dict['username'] )
-    if _password is None:
-        raise Exception("No password stored for user {}. Please use command \"keyring set livysubmit {}\" to store password".format( args_dict['username'], args_dict['username']) )
+    if args_dict['username'] is None:
+        _password = keyring.get_password( 'livysubmit' , args_dict['username'] )
+        if _password is None:
+            raise Exception("No password stored for user {}. Please use command \"keyring set livysubmit {}\" to store password".format( args_dict['username'], args_dict['username']) )
 
 
     return args_dict
