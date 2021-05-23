@@ -563,7 +563,6 @@ def main():
     args = parser.parse_args()
 
     parsed_arguments = parse_arguments(args)
-    print(args)
 
 
     if 'keyring' not in sys.modules:
