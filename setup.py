@@ -12,7 +12,7 @@ setup(
     # Needed for dependencies
     install_requires=[],
     # *strongly* suggested for sharing
-    version='1.0.1',
+    version='1.1.0',
     # The license can be anything you like
     license='MIT',
     description='Livy-Submit enables you to send your python files to a spark cluster using Livy running on edge node',
